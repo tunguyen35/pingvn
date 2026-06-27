@@ -1,5 +1,4 @@
-// Load SpeedTest từ CDN
-const SPEEDTEST_CDN = 'https://cdn.jsdelivr.net/npm/@cloudflare/speedtest@1.10.1/dist/speedtest.min.js';
+import SpeedTest from 'https://cdn.jsdelivr.net/npm/@cloudflare/speedtest@1.10.1/+esm';
 
 let speedtest = null;
 let history = [];
@@ -16,17 +15,6 @@ const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
 const historyList = document.getElementById('historyList');
 
-// Load library từ CDN
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
 // Load history từ localStorage
 function loadHistory() {
     const saved = localStorage.getItem('speedtest-history');
@@ -34,24 +22,21 @@ function loadHistory() {
     renderHistory();
 }
 
-// Save history vào localStorage
 function saveHistory() {
     localStorage.setItem('speedtest-history', JSON.stringify(history));
 }
 
-// Render history
 function renderHistory() {
     if (history.length === 0) {
         historyList.innerHTML = '<p class="empty-history">No test history yet</p>';
         return;
     }
-
     historyList.innerHTML = history.map((item, index) => `
         <div class="history-item">
             <div class="history-item-info">
                 <div class="history-item-time">${item.timestamp}</div>
                 <div class="history-item-values">
-                    ↓ ${item.download} Mbps &nbsp;|&nbsp; ↑ ${item.upload} Mbps &nbsp;|&nbsp; Ping ${item.latency}ms &nbsp;|&nbsp; Jitter ${item.jitter}ms
+                    ⬇️ ${item.download} Mbps &nbsp;|&nbsp; ⬆️ ${item.upload} Mbps &nbsp;|&nbsp; 📡 ${item.latency}ms &nbsp;|&nbsp; 📊 ${item.jitter}ms
                 </div>
             </div>
             <button class="history-item-delete" onclick="deleteHistory(${index})">✕</button>
@@ -59,20 +44,17 @@ function renderHistory() {
     `).join('');
 }
 
-// Xóa 1 history item
 window.deleteHistory = function(index) {
     history.splice(index, 1);
     saveHistory();
     renderHistory();
 }
 
-// Update progress bar
 function setProgress(pct) {
     progressFill.style.width = pct + '%';
     progressText.textContent = Math.round(pct) + '%';
 }
 
-// Update status text
 function updateStatus(type) {
     const messages = {
         latency: '📡 Measuring latency...',
@@ -83,48 +65,31 @@ function updateStatus(type) {
     statusText.textContent = messages[type] || '⏳ Running test...';
 }
 
-// Bắt đầu test
 async function startTest() {
     if (isRunning) return;
-
-    // Load library nếu chưa load
-    if (!window.SpeedTest) {
-        statusText.textContent = '⏳ Loading library...';
-        statusDiv.style.display = 'block';
-        try {
-            await loadScript(SPEEDTEST_CDN);
-        } catch (e) {
-            statusText.textContent = '❌ Cannot load SpeedTest library. Please refresh!';
-            return;
-        }
-    }
 
     isRunning = true;
     startBtn.disabled = true;
     resetBtn.disabled = false;
 
-    // Reset UI
     resultsDiv.style.display = 'none';
     statusDiv.style.display = 'block';
     progressDiv.style.display = 'block';
     statusText.textContent = '⏳ Initializing...';
     setProgress(0);
 
-    // Reset values
     ['download', 'upload', 'latency', 'jitter'].forEach(id => {
         document.getElementById(id + 'Value').textContent = '-';
     });
 
     try {
-        speedtest = new window.SpeedTest({ autoStart: false });
+        speedtest = new SpeedTest({ autoStart: false });
 
         let dlPoints = 0;
         let ulPoints = 0;
 
         speedtest.onResultsChange = ({ type }) => {
             updateStatus(type);
-
-            // Cập nhật real-time
             const results = speedtest.results;
 
             if (type === 'download') {
@@ -134,7 +99,7 @@ async function startTest() {
                     document.getElementById('downloadValue').textContent = (dl / 1e6).toFixed(1);
                     resultsDiv.style.display = 'grid';
                 }
-                setProgress(Math.min(dlPoints * 5, 40));
+                setProgress(Math.min(dlPoints * 5, 45));
             }
 
             if (type === 'upload') {
@@ -144,7 +109,7 @@ async function startTest() {
                     document.getElementById('uploadValue').textContent = (ul / 1e6).toFixed(1);
                     resultsDiv.style.display = 'grid';
                 }
-                setProgress(Math.min(40 + ulPoints * 5, 80));
+                setProgress(Math.min(45 + ulPoints * 5, 90));
             }
 
             if (type === 'latency') {
@@ -180,7 +145,6 @@ async function startTest() {
             document.getElementById('latencyValue').textContent = lat;
             document.getElementById('jitterValue').textContent = jit;
 
-            // Lưu vào history
             history.unshift({
                 timestamp: new Date().toLocaleString('vi-VN'),
                 download: dl,
@@ -194,7 +158,7 @@ async function startTest() {
 
             isRunning = false;
             startBtn.disabled = false;
-            startBtn.textContent = '🔄 Test Again';
+            startBtn.textContent = '▶ Test Again';
         };
 
         speedtest.play();
@@ -207,7 +171,6 @@ async function startTest() {
     }
 }
 
-// Reset test
 function resetTest() {
     if (speedtest) {
         speedtest.pause();
@@ -223,9 +186,7 @@ function resetTest() {
     setProgress(0);
 }
 
-// Event listeners
 startBtn.addEventListener('click', startTest);
 resetBtn.addEventListener('click', resetTest);
 
-// Khởi tạo
 loadHistory();
