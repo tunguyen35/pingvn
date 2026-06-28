@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⚡ Speed Test</title>
 
-    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0066ff">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -30,7 +29,6 @@
                 <p id="statusText">Initializing...</p>
             </div>
 
-            <!-- Wave Progress Bar -->
             <div id="progress" style="display: none; margin-top: 24px;">
                 <div class="wave-bar">
                     <div id="progressFill" class="wave-fill">
@@ -40,7 +38,6 @@
                 <p id="progressText" class="progress-label">0%</p>
             </div>
 
-            <!-- Results -->
             <div id="results" class="results" style="display: none;">
                 <div class="result-card">
                     <div class="result-icon">⬇️</div>
@@ -76,7 +73,6 @@
                 </div>
             </div>
 
-            <!-- Server Info -->
             <div id="serverInfo" class="server-info" style="display:none;">
                 <div class="info-card">
                     <div class="info-label">🌐 IP Address</div>
@@ -105,13 +101,10 @@
 
     <script type="module" src="app.js"></script>
     <script>
-        // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(reg => console.log('[SW] Registered:', reg.scope))
-
-                    
                     .catch(err => console.error('[SW] Error:', err));
             });
         }
